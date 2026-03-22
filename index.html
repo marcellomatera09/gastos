@@ -648,17 +648,19 @@ const CARTOES = {
 };
 
 function getFaturaRef(dateStr, cartao) {
-  // Returns { mes, ano } of the fatura that will contain this transaction
+  // Retorna o mês/ano da FATURA (sempre mês seguinte ao da despesa)
+  // Despesas até dia fechaDia → fatura do mês+1
+  // Despesas após dia fechaDia → fatura do mês+2
   const d = new Date(dateStr + 'T12:00:00');
   const fechaDia = CARTOES[cartao].fechaDia;
   let mes = d.getMonth() + 1;
   let ano = d.getFullYear();
-  // if day <= fechaDia, it goes into the current billing cycle (paid next month)
-  // if day > fechaDia, it goes into next month's billing cycle
   if (d.getDate() > fechaDia) {
+    mes += 2;
+  } else {
     mes += 1;
-    if (mes > 12) { mes = 1; ano++; }
   }
+  if (mes > 12) { mes -= 12; ano++; }
   return { mes, ano };
 }
 
@@ -672,10 +674,15 @@ function getCurrentFaturaRef(cartao) {
   const fechaDia = CARTOES[cartao].fechaDia;
   let mes = hoje.getMonth() + 1;
   let ano = hoje.getFullYear();
+  // Fatura sempre vence no mês SEGUINTE ao das despesas.
+  // Se ainda não fechou: despesas são do mês atual → fatura vence mês+1
+  // Se já fechou (passou o fechaDia): despesas vão pro próximo ciclo → fatura vence mês+2
   if (hoje.getDate() > fechaDia) {
+    mes += 2;
+  } else {
     mes += 1;
-    if (mes > 12) { mes = 1; ano++; }
   }
+  if (mes > 12) { mes -= 12; ano++; }
   return { mes, ano };
 }
 
