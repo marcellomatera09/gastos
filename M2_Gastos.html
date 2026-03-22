@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Marcello Matera</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --surface: #18181b;
+    --surface2: #222226;
+    --border: #2e2e35;
+    --text: #f0efe8;
+    --muted: #888880;
+    --accent: #c8a96e;
+    --accent-dim: #2a2318;
+    --inter-color: #4a9eff;
+    --inter-dim: #0d1e35;
+    --bradesco-color: #e05a5a;
+    --bradesco-dim: #2a1010;
+    --success: #5cbf8a;
+    --parcela: #9b7fe8;
+    --parcela-dim: #1e1630;
+    --recorrente: #f0a44a;
+    --recorrente-dim: #2a1e08;
+    --terceiros: #5cbf8a;
+    --terceiros-dim: #0d2018;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(14,14,15,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: env(safe-area-inset-top, 0) 0 0;
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+  }
+  .nav-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .nav-tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 3px;
+  }
+  .nav-tab {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-tab.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  /* MAIN */
+  .main {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 70px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    min-height: 100vh;
+  }
+
+  .page { display: none; padding: 20px; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    color: var(--text);
+  }
+
+  /* FATURA CARDS */
+  .fatura-card {
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .fatura-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .fatura-inter { background: var(--inter-dim); border: 1px solid rgba(74,158,255,0.2); }
+  .fatura-inter::before { background: var(--inter-color); }
+  .fatura-bradesco { background: var(--bradesco-dim); border: 1px solid rgba(224,90,90,0.2); }
+  .fatura-bradesco::before { background: var(--bradesco-color); }
+
+  .fatura-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .fatura-inter .fatura-label { color: var(--inter-color); }
+  .fatura-bradesco .fatura-label { color: var(--bradesco-color); }
+
+  .fatura-total {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px; margin-bottom: 4px;
+  }
+  .fatura-info { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+
+  .fatura-breakdown {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .breakdown-item {
+    background: rgba(255,255,255,0.04);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    text-align: center;
+  }
+  .breakdown-label { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+  .breakdown-value { font-size: 13px; font-weight: 500; }
+
+  /* TAGS */
+  .tag {
+    display: inline-flex; align-items: center;
+    padding: 3px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 500; gap: 4px;
+  }
+  .tag-parcela { background: var(--parcela-dim); color: var(--parcela); }
+  .tag-recorrente { background: var(--recorrente-dim); color: var(--recorrente); }
+  .tag-terceiro { background: var(--terceiros-dim); color: var(--terceiros); }
+  .tag-normal { background: var(--surface2); color: var(--muted); }
+
+  /* TRANSACTION LIST */
+  .tx-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tx-item:last-child { border-bottom: none; }
+  .tx-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+    background: var(--surface2);
+  }
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-meta { font-size: 11px; color: var(--muted); margin-top: 2px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tx-right { text-align: right; flex-shrink: 0; }
+  .tx-value { font-size: 15px; font-weight: 500; }
+  .tx-resp { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .tx-delete {
+    background: none; border: none; color: var(--muted);
+    font-size: 16px; cursor: pointer; padding: 4px;
+    flex-shrink: 0;
+  }
+
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    display: block;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-textarea { min-height: 80px; resize: vertical; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 14px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500;
+    cursor: pointer; border: none;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #1a1200;
+  }
+  .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ai {
+    background: linear-gradient(135deg, #2a1e35, #1e2a35);
+    color: var(--text);
+    border: 1px solid rgba(155,127,232,0.3);
+  }
+  .btn-sm {
+    width: auto; padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  /* SMS PARSER */
+  .sms-box {
+    background: var(--surface2);
+    border: 1px solid rgba(155,127,232,0.2);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .sms-box-title {
+    font-size: 12px; font-weight: 500; color: var(--parcela);
+    margin-bottom: 10px; letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* TOGGLE */
+  .toggle-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 14px; }
+  .toggle-sub { font-size: 12px; color: var(--muted); }
+
+  /* CHIPS */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 6px 12px; border-radius: 20px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+  }
+  .chip.selected {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+  .section-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+
+  /* SETTINGS */
+  .settings-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-item:last-child { border-bottom: none; }
+  .settings-label { font-size: 15px; }
+  .settings-value { font-size: 14px; color: var(--muted); }
+
+  .resp-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 10px;
+    font-size: 13px; cursor: pointer;
+  }
+  .resp-chip-del {
+    color: var(--muted); font-size: 14px;
+    background: none; border: none; cursor: pointer; line-height: 1;
+    padding: 0 2px;
+  }
+
+  /* SPINNER */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(200,169,110,0.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 12px 20px;
+    font-size: 14px;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* MODAL */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 200; display: none; align-items: flex-end;
+    backdrop-filter: blur(4px);
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 20px 20px calc(env(safe-area-inset-bottom,0px) + 20px);
+    animation: slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle {
+    width: 40px; height: 4px; background: var(--border);
+    border-radius: 2px; margin: 0 auto 20px;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px; margin-bottom: 20px;
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding-bottom: 4px; margin-bottom: 16px;
+    scrollbar-width: none;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    padding: 7px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap;
+    background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border);
+    flex-shrink: 0; transition: all 0.2s;
+  }
+  .filter-chip.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .divider-label {
+    font-size: 11px; font-weight: 500; color: var(--muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 16px 0 8px;
+  }
+
+  .amount-display {
+    font-family: 'DM Serif Display', serif;
+    font-size: 38px; color: var(--accent);
+    text-align: center; padding: 10px 0 6px;
+  }
+  .amount-label {
+    text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">Marcello Matera</div>
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="showPage('home')">Faturas</div>
+      <div class="nav-tab" onclick="showPage('add')">+ Lançar</div>
+      <div class="nav-tab" onclick="showPage('history')">Histórico</div>
+      <div class="nav-tab" onclick="showPage('settings')">Config</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- HOME: FATURAS -->
+  <div class="page active" id="page-home">
+    <div class="section-title">Faturas</div>
+    <div class="section-sub" id="home-date-sub">Resumo atual dos seus cartões</div>
+
+    <div id="fatura-inter-card"></div>
+    <div id="fatura-bradesco-card"></div>
+
+    <div class="divider-label">Próximas parcelas</div>
+    <div id="proximas-parcelas"></div>
+  </div>
+
+  <!-- ADD -->
+  <div class="page" id="page-add">
+    <div class="section-title">Lançar despesa</div>
+    <div class="section-sub">Cole o SMS ou preencha manualmente</div>
+
+    <div class="sms-box">
+      <div class="sms-box-title">✦ Importar via SMS / Push</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <textarea class="form-textarea" id="sms-input" placeholder="Cole aqui o SMS do Bradesco ou o texto do push do Inter..."></textarea>
+      </div>
+      <button class="btn btn-ai" onclick="parseSMS()">
+        <div id="ai-spinner" style="display:none" class="spinner"></div>
+        <span id="ai-btn-text">✦ Interpretar com IA</span>
+      </button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Cartão</label>
+      <div class="chips" id="cartao-chips">
+        <div class="chip selected" data-val="bradesco" onclick="selectChip(this,'cartao')">Bradesco/Amex</div>
+        <div class="chip" data-val="inter" onclick="selectChip(this,'cartao')">Inter</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Data da compra</label>
+        <input type="date" class="form-input" id="tx-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor Total (R$)</label>
+        <input type="number" class="form-input" id="tx-valor" placeholder="0,00" step="0.01" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Estabelecimento</label>
+      <input type="text" class="form-input" id="tx-nome" placeholder="Ex: iFood, Uber, Farmácia...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <div class="chips" id="tipo-chips">
+        <div class="chip selected" data-val="normal" onclick="selectChip(this,'tipo')">Normal</div>
+        <div class="chip" data-val="parcelado" onclick="selectChip(this,'tipo')">Parcelado</div>
+        <div class="chip" data-val="recorrente" onclick="selectChip(this,'tipo')">Recorrente</div>
+      </div>
+    </div>
+
+    <div id="parcelamento-fields" style="display:none">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Parcela atual</label>
+          <input type="number" class="form-input" id="tx-parc-atual" placeholder="Ex: 3" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total de parcelas</label>
+          <input type="number" class="form-input" id="tx-parc-total" placeholder="Ex: 12" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Responsável pelo valor total</label>
+      <div id="resp-chips" class="chips"></div>
+    </div>
+
+    <div class="form-group" id="split-section" style="display:none">
+      <label class="form-label">Divisão dos valores (R$)</label>
+      <div id="split-inputs"></div>
+    </div>
+
+    <div style="margin-top:6px">
+      <button class="btn btn-primary" onclick="addTransaction()">Salvar despesa</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="page" id="page-history">
+    <div class="section-title">Histórico</div>
+    <div class="section-sub">Todas as transações lançadas</div>
+
+    <div class="filter-bar" id="history-filters">
+      <div class="filter-chip active" data-filter="all" onclick="filterHistory(this)">Todas</div>
+      <div class="filter-chip" data-filter="bradesco" onclick="filterHistory(this)">Bradesco</div>
+      <div class="filter-chip" data-filter="inter" onclick="filterHistory(this)">Inter</div>
+      <div class="filter-chip" data-filter="parcelado" onclick="filterHistory(this)">Parceladas</div>
+      <div class="filter-chip" data-filter="recorrente" onclick="filterHistory(this)">Recorrentes</div>
+      <div class="filter-chip" data-filter="terceiros" onclick="filterHistory(this)">Terceiros</div>
+    </div>
+
+    <div id="history-list"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="section-title">Configurações</div>
+    <div class="section-sub">Personalize o sistema</div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">Cartões</div>
+      <div class="settings-item">
+        <div>
+          <div class="settings-label">Bradesco / Amex</div>
+          <div style="font-size:12px;color:var(--muted)">Fecha dia 28 · Vence dia 14</div>
+        </div>
+        <div class="tag tag-normal">Ativo</div>
+      </div>
+      <div class="settings-item">
+        <div>
+          <div class="settings-label">Inter</div>
+          <div style="font-size:12px;color:var(--muted)">Fecha dia 9 · Vence dia 15</div>
+        </div>
+        <div class="tag tag-normal">Ativo</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Responsáveis</div>
+        <button class="btn btn-secondary btn-sm" onclick="openAddResp()">+ Adicionar</button>
+      </div>
+      <div id="resp-settings-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:4px">Recorrentes cadastrados</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Reconhecidos automaticamente ao importar SMS</div>
+      <div id="recorrentes-settings-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">E-mail de fechamento</div>
+      <div class="form-group">
+        <label class="form-label">Seu e-mail</label>
+        <input type="email" class="form-input" id="settings-email" placeholder="seu@email.com">
+      </div>
+      <button class="btn btn-secondary" onclick="saveSettings()">Salvar configurações</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">Guia: Atalho iPhone (Bradesco)</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        1. Abra o app <b style="color:var(--text)">Atalhos</b> no iPhone<br>
+        2. Crie uma automação: <em>Mensagem recebida</em><br>
+        3. Remetente: <b style="color:var(--text)">BRADESCO CARTOES</b><br>
+        4. Ação: <em>Copiar para área de transferência</em><br>
+        5. Ação: <em>Abrir URL</em> → URL deste app<br>
+        6. Ative <em>Executar automaticamente</em>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(224,90,90,0.2)">
+      <div class="card-title" style="margin-bottom:8px;color:var(--bradesco-color)">Dados</div>
+      <button class="btn btn-secondary" onclick="exportData()" style="margin-bottom:10px">Exportar JSON</button>
+      <button class="btn btn-secondary" onclick="clearData()" style="color:var(--bradesco-color);border-color:rgba(224,90,90,0.2)">Limpar todos os dados</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL ADD RESP -->
+<div class="modal-bg" id="modal-resp">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Novo responsável</div>
+    <div class="form-group">
+      <label class="form-label">Nome</label>
+      <input type="text" class="form-input" id="new-resp-name" placeholder="Ex: João, Empresa XYZ...">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-resp')" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary" onclick="addResp()" style="flex:1">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────────────────
+const DEFAULT_RESP = ['Marcello','Simone','Bia','4Lighting','M2','Aplicação'];
+
+function loadState() {
+  try {
+    return JSON.parse(localStorage.getItem('m2gastos') || 'null') || {
+      transactions: [],
+      responsaveis: [...DEFAULT_RESP],
+      email: ''
+    };
+  } catch(e) {
+    return { transactions: [], responsaveis: [...DEFAULT_RESP], email: '' };
+  }
+}
+
+function saveState() {
+  localStorage.setItem('m2gastos', JSON.stringify(state));
+}
+
+let state = loadState();
+
+// ── CARTÃO RULES ──────────────────────────────────────────────────────────
+const CARTOES = {
+  bradesco: { nome: 'Bradesco/Amex', fechaDia: 28, venceDia: 14, color: 'bradesco' },
+  inter:    { nome: 'Inter',          fechaDia: 9,  venceDia: 15, color: 'inter' }
+};
+
+function getFaturaRef(dateStr, cartao) {
+  // Returns { mes, ano } of the fatura that will contain this transaction
+  const d = new Date(dateStr + 'T12:00:00');
+  const fechaDia = CARTOES[cartao].fechaDia;
+  let mes = d.getMonth() + 1;
+  let ano = d.getFullYear();
+  // if day <= fechaDia, it goes into the current billing cycle (paid next month)
+  // if day > fechaDia, it goes into next month's billing cycle
+  if (d.getDate() > fechaDia) {
+    mes += 1;
+    if (mes > 12) { mes = 1; ano++; }
+  }
+  return { mes, ano };
+}
+
+function getFaturaLabel(mes, ano) {
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return `${meses[mes-1]}/${ano}`;
+}
+
+function getCurrentFaturaRef(cartao) {
+  const hoje = new Date();
+  const fechaDia = CARTOES[cartao].fechaDia;
+  let mes = hoje.getMonth() + 1;
+  let ano = hoje.getFullYear();
+  if (hoje.getDate() > fechaDia) {
+    mes += 1;
+    if (mes > 12) { mes = 1; ano++; }
+  }
+  return { mes, ano };
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-tab')[['home','add','history','settings'].indexOf(id)].classList.add('active');
+  if (id === 'home') renderHome();
+  if (id === 'history') renderHistory('all');
+  if (id === 'add') initAddForm();
+  if (id === 'settings') renderSettings();
+}
+
+// ── HOME ──────────────────────────────────────────────────────────────────
+function renderHome() {
+  const hoje = new Date();
+  document.getElementById('home-date-sub').textContent =
+    hoje.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
+
+  ['bradesco','inter'].forEach(cartao => {
+    const ref = getCurrentFaturaRef(cartao);
+    const txs = state.transactions.filter(t => {
+      if (t.cartao !== cartao) return false;
+      const r = getFaturaRef(t.date, cartao);
+      return r.mes === ref.mes && r.ano === ref.ano;
+    });
+
+    const total = txs.reduce((s,t) => s + parseFloat(t.valor||0), 0);
+    const meu = txs.reduce((s,t) => {
+      const v = t.responsaveis?.Marcello;
+      return s + (v != null ? parseFloat(v) : parseFloat(t.valor||0));
+    }, 0);
+    const outros = txs.reduce((s,t) => {
+      const resp = t.responsaveis || {};
+      const outrosVal = Object.entries(resp)
+        .filter(([k]) => k !== 'Marcello')
+        .reduce((a,[,v]) => a + parseFloat(v||0), 0);
+      return s + outrosVal;
+    }, 0);
+    const parcelas = txs.filter(t => t.tipo === 'parcelado')
+      .reduce((s,t) => s + (parseFloat(t.responsaveis?.Marcello ?? t.valor)||0), 0);
+    const recorrentes = txs.filter(t => t.tipo === 'recorrente')
+      .reduce((s,t) => s + (parseFloat(t.responsaveis?.Marcello ?? t.valor)||0), 0);
+
+    const c = CARTOES[cartao];
+    const vence = new Date(hoje.getFullYear(), ref.mes - 1, c.venceDia);
+    const diasAte = Math.ceil((vence - hoje) / 86400000);
+    const venceStr = diasAte > 0 ? `Vence em ${diasAte} dias (dia ${c.venceDia}/${ref.mes < 10 ? '0'+ref.mes : ref.mes})` : 'Fatura vencida';
+
+    let breakdown;
+    if (cartao === 'bradesco') {
+      breakdown = `
+        <div class="fatura-breakdown" style="grid-template-columns:1fr 1fr 1fr 1fr">
+          <div class="breakdown-item">
+            <div class="breakdown-label">Marcello</div>
+            <div class="breakdown-value" style="color:var(--accent)">R$ ${fmt(meu)}</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-label">Parcelas</div>
+            <div class="breakdown-value" style="color:var(--parcela)">R$ ${fmt(parcelas)}</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-label">Recorrentes</div>
+            <div class="breakdown-value" style="color:var(--recorrente)">R$ ${fmt(recorrentes)}</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-label">Outros</div>
+            <div class="breakdown-value" style="color:var(--terceiros)">R$ ${fmt(outros)}</div>
+          </div>
+        </div>`;
+    } else {
+      breakdown = `
+        <div class="fatura-breakdown">
+          <div class="breakdown-item">
+            <div class="breakdown-label">Meu gasto</div>
+            <div class="breakdown-value" style="color:var(--text)">R$ ${fmt(meu)}</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-label">Parcelas</div>
+            <div class="breakdown-value" style="color:var(--parcela)">R$ ${fmt(parcelas)}</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-label">Recorrentes</div>
+            <div class="breakdown-value" style="color:var(--recorrente)">R$ ${fmt(recorrentes)}</div>
+          </div>
+        </div>`;
+    }
+
+    document.getElementById(`fatura-${cartao}-card`).innerHTML = `
+      <div class="fatura-card fatura-${cartao}">
+        <div class="fatura-label">${c.nome} · ${getFaturaLabel(ref.mes, ref.ano)}</div>
+        <div class="fatura-total">R$ ${fmt(total)}</div>
+        <div class="fatura-info">${venceStr} · Fecha dia ${c.fechaDia} · ${txs.length} lançamentos</div>
+        ${breakdown}
+      </div>`;
+  });
+
+  // Próximas parcelas (future installments)
+  const hoje2 = new Date();
+  const futuras = [];
+  state.transactions.filter(t => t.tipo === 'parcelado' && t.parcAtual && t.parcTotal).forEach(t => {
+    const parcRestantes = parseInt(t.parcTotal) - parseInt(t.parcAtual);
+    for (let i = 1; i <= Math.min(parcRestantes, 3); i++) {
+      const ref = getFaturaRef(t.date, t.cartao);
+      let m = ref.mes + i; let a = ref.ano;
+      while (m > 12) { m -= 12; a++; }
+      futuras.push({ nome: t.nome, valor: t.valor, cartao: t.cartao, mes: m, ano: a,
+        parcNum: parseInt(t.parcAtual) + i, parcTotal: t.parcTotal });
+    }
+  });
+
+  const container = document.getElementById('proximas-parcelas');
+  if (!futuras.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><div>Nenhuma parcela futura registrada</div></div>';
+    return;
+  }
+  futuras.sort((a,b) => a.ano*12+a.mes - b.ano*12+b.mes);
+  container.innerHTML = futuras.slice(0,6).map(p => `
+    <div class="tx-item">
+      <div class="tx-icon" style="background:var(--parcela-dim);color:var(--parcela)">▤</div>
+      <div class="tx-info">
+        <div class="tx-name">${p.nome}</div>
+        <div class="tx-meta">
+          <span>${getFaturaLabel(p.mes, p.ano)}</span>
+          <span>${CARTOES[p.cartao].nome}</span>
+          <span class="tag tag-parcela">${p.parcNum}/${p.parcTotal}</span>
+        </div>
+      </div>
+      <div class="tx-right">
+        <div class="tx-value">R$ ${fmt(p.valor)}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── ADD FORM ───────────────────────────────────────────────────────────────
+function initAddForm() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('tx-date').value = today;
+  renderRespChips();
+}
+
+function renderRespChips() {
+  const container = document.getElementById('resp-chips');
+  container.innerHTML = state.responsaveis.map(r => `
+    <div class="chip" data-val="${r}" onclick="toggleResp(this,'${r}')">${r}</div>`).join('');
+}
+
+function toggleResp(el, name) {
+  el.classList.toggle('selected');
+  updateSplitSection();
+}
+
+function updateSplitSection() {
+  const selected = [...document.querySelectorAll('#resp-chips .chip.selected')].map(c => c.dataset.val);
+  const section = document.getElementById('split-section');
+  const valor = parseFloat(document.getElementById('tx-valor').value || 0);
+
+  if (selected.length > 1) {
+    section.style.display = 'block';
+    document.getElementById('split-inputs').innerHTML = selected.map(r => `
+      <div class="form-row" style="margin-bottom:8px;align-items:center">
+        <label style="font-size:14px;padding:12px 0;color:var(--text)">${r}</label>
+        <input type="number" class="form-input" id="split-${r}" placeholder="R$"
+          step="0.01" inputmode="decimal" value="${valor && selected.length ? (valor/selected.length).toFixed(2) : ''}">
+      </div>`).join('');
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+function selectChip(el, group) {
+  el.closest('.chips').querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  if (group === 'tipo') {
+    document.getElementById('parcelamento-fields').style.display =
+      el.dataset.val === 'parcelado' ? 'block' : 'none';
+  }
+}
+
+// ── SMS PARSER ─────────────────────────────────────────────────────────────
+async function parseSMS() {
+  const text = document.getElementById('sms-input').value.trim();
+  if (!text) return;
+
+  document.getElementById('ai-spinner').style.display = 'flex';
+  document.getElementById('ai-btn-text').textContent = 'Interpretando...';
+
+  const recCatalog = RECORRENTES_CATALOG.map(r => r.nome).join(', ');
+  const prompt = `Você é um extrator de dados de cartão de crédito. Analise este SMS/push e retorne JSON.
+
+Recorrentes conhecidos (classificar sempre como recorrente): ${recCatalog}
+
+Retorne APENAS JSON válido sem markdown:
+{
+  "nome": "nome limpo",
+  "valor": número float,
+  "date": "YYYY-MM-DD",
+  "cartao": "bradesco" ou "inter",
+  "tipo": "normal" ou "parcelado" ou "recorrente",
+  "parcAtual": número ou null,
+  "parcTotal": número ou null
+}
+
+Regras:
+- EM X X no SMS = parcelado. Ex: EM 2 X parcAtual:1 parcTotal:2
+- Nomes com ~ * números = limpar. 55IFD*BONNE=iFood, 39Wellhub=Wellhub, 34IFD=iFood
+- BRADESCO = bradesco, Inter = inter
+- PG*TRINKS = Dom Hélio Barber (recorrente)
+- VMT*, FAST PASS, CONGONHAS R$0,10 = normal (taxa embarque)
+
+SMS: ${text}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content.map(i => i.text||'').join('').replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(raw);
+
+    if (parsed.date) document.getElementById('tx-date').value = parsed.date;
+    if (parsed.valor) document.getElementById('tx-valor').value = parsed.valor;
+    if (parsed.nome) document.getElementById('tx-nome').value = parsed.nome;
+
+    if (parsed.cartao) {
+      document.querySelectorAll('#cartao-chips .chip').forEach(c => {
+        c.classList.toggle('selected', c.dataset.val === parsed.cartao);
+      });
+    }
+    if (parsed.tipo) {
+      document.querySelectorAll('#tipo-chips .chip').forEach(c => {
+        c.classList.toggle('selected', c.dataset.val === parsed.tipo);
+      });
+      document.getElementById('parcelamento-fields').style.display =
+        parsed.tipo === 'parcelado' ? 'block' : 'none';
+    }
+    if (parsed.parcAtual) document.getElementById('tx-parc-atual').value = parsed.parcAtual;
+    if (parsed.parcTotal) document.getElementById('tx-parc-total').value = parsed.parcTotal;
+
+    // Auto-select Marcello as default
+    document.querySelectorAll('#resp-chips .chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === 'Marcello');
+    });
+
+    document.getElementById('sms-input').value = '';
+    toast('✦ Dados preenchidos automaticamente');
+  } catch(e) {
+    toast('Erro ao interpretar. Preencha manualmente.');
+  }
+
+  document.getElementById('ai-spinner').style.display = 'none';
+  document.getElementById('ai-btn-text').textContent = '✦ Interpretar com IA';
+}
+
+// ── ADD TRANSACTION ────────────────────────────────────────────────────────
+function addTransaction() {
+  const nome = document.getElementById('tx-nome').value.trim();
+  const valor = parseFloat(document.getElementById('tx-valor').value);
+  const date = document.getElementById('tx-date').value;
+  const cartao = document.querySelector('#cartao-chips .chip.selected')?.dataset.val;
+  const tipo = document.querySelector('#tipo-chips .chip.selected')?.dataset.val || 'normal';
+
+  if (!nome || !valor || !date || !cartao) {
+    toast('Preencha todos os campos obrigatórios'); return;
+  }
+
+  const selectedResps = [...document.querySelectorAll('#resp-chips .chip.selected')].map(c => c.dataset.val);
+  const responsaveis = {};
+
+  if (selectedResps.length === 0) {
+    responsaveis['Marcello'] = valor;
+  } else if (selectedResps.length === 1) {
+    responsaveis[selectedResps[0]] = valor;
+  } else {
+    selectedResps.forEach(r => {
+      const v = parseFloat(document.getElementById(`split-${r}`)?.value || 0);
+      if (v > 0) responsaveis[r] = v;
+    });
+  }
+
+  const tx = {
+    id: Date.now(),
+    nome, valor, date, cartao, tipo, responsaveis,
+    parcAtual: tipo === 'parcelado' ? document.getElementById('tx-parc-atual').value : null,
+    parcTotal: tipo === 'parcelado' ? document.getElementById('tx-parc-total').value : null,
+  };
+
+  state.transactions.unshift(tx);
+  saveState();
+  toast('Despesa salva! ✓');
+
+  // Reset
+  document.getElementById('tx-nome').value = '';
+  document.getElementById('tx-valor').value = '';
+  document.getElementById('tx-parc-atual').value = '';
+  document.getElementById('tx-parc-total').value = '';
+  document.getElementById('parcelamento-fields').style.display = 'none';
+  document.querySelectorAll('#tipo-chips .chip').forEach((c,i) => c.classList.toggle('selected', i===0));
+  document.querySelectorAll('#resp-chips .chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('split-section').style.display = 'none';
+}
+
+// ── HISTORY ────────────────────────────────────────────────────────────────
+let currentFilter = 'all';
+
+function filterHistory(el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderHistory(el.dataset.filter);
+}
+
+function renderHistory(filter) {
+  currentFilter = filter;
+  let txs = [...state.transactions];
+
+  if (filter === 'bradesco') txs = txs.filter(t => t.cartao === 'bradesco');
+  else if (filter === 'inter') txs = txs.filter(t => t.cartao === 'inter');
+  else if (filter === 'parcelado') txs = txs.filter(t => t.tipo === 'parcelado');
+  else if (filter === 'recorrente') txs = txs.filter(t => t.tipo === 'recorrente');
+  else if (filter === 'terceiros') txs = txs.filter(t => {
+    const resp = t.responsaveis || {};
+    return Object.keys(resp).some(r => r !== 'Marcello' && resp[r] > 0);
+  });
+
+  const container = document.getElementById('history-list');
+  if (!txs.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">∅</div><div>Nenhuma transação encontrada</div></div>';
+    return;
+  }
+
+  const icons = { normal: '◆', parcelado: '▤', recorrente: '↻' };
+  const iconColors = { normal: 'var(--accent-dim)', parcelado: 'var(--parcela-dim)', recorrente: 'var(--recorrente-dim)' };
+  const iconTextColors = { normal: 'var(--accent)', parcelado: 'var(--parcela)', recorrente: 'var(--recorrente)' };
+
+  container.innerHTML = txs.map(t => {
+    const respStr = Object.entries(t.responsaveis||{}).map(([k,v]) => `${k}: R$${fmt(v)}`).join(' · ');
+    const ref = getFaturaRef(t.date, t.cartao);
+    const cartaoLabel = CARTOES[t.cartao]?.nome || t.cartao;
+    let tags = `<span class="tag tag-${t.tipo}">${t.tipo === 'parcelado' ? `${t.parcAtual}/${t.parcTotal}` : t.tipo}</span>`;
+    return `
+      <div class="tx-item">
+        <div class="tx-icon" style="background:${iconColors[t.tipo]||'var(--surface2)'};color:${iconTextColors[t.tipo]||'var(--muted)'}">
+          ${icons[t.tipo]||'◆'}
+        </div>
+        <div class="tx-info">
+          <div class="tx-name">${t.nome}</div>
+          <div class="tx-meta">
+            <span>${new Date(t.date+'T12:00:00').toLocaleDateString('pt-BR')}</span>
+            <span>${cartaoLabel}</span>
+            <span>Fatura ${getFaturaLabel(ref.mes, ref.ano)}</span>
+            ${tags}
+          </div>
+          <div class="tx-meta" style="margin-top:3px;color:var(--muted)">${respStr}</div>
+        </div>
+        <div class="tx-right">
+          <div class="tx-value">R$ ${fmt(t.valor)}</div>
+          <button class="tx-delete" onclick="deleteTransaction(${t.id})">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function deleteTransaction(id) {
+  if (!confirm('Remover esta transação?')) return;
+  state.transactions = state.transactions.filter(t => t.id !== id);
+  saveState();
+  renderHistory(currentFilter);
+  toast('Transação removida');
+}
+
+// ── SETTINGS ───────────────────────────────────────────────────────────────
+function renderSettings() {
+  document.getElementById('settings-email').value = state.email || '';
+  // Catálogo de recorrentes
+  const recList = document.getElementById('recorrentes-settings-list');
+  if (recList) {
+    recList.innerHTML = RECORRENTES_CATALOG.map(r => `
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">${r.nome}</div>
+          <div style="font-size:12px;color:var(--muted)">${r.cartao === 'bradesco' ? 'Bradesco/Amex' : 'Inter'} · Dia ${r.dia} de cada mês</div>
+        </div>
+        <div style="font-size:14px;font-weight:500;color:var(--recorrente)">R$ ${fmt(r.valor)}</div>
+      </div>`).join('');
+  }
+  const list = document.getElementById('resp-settings-list');
+  list.innerHTML = state.responsaveis.map(r => `
+    <div class="toggle-row">
+      <span class="toggle-label">${r}</span>
+      <button class="resp-chip-del" onclick="removeResp('${r}')">✕</button>
+    </div>`).join('');
+}
+
+function openAddResp() {
+  document.getElementById('new-resp-name').value = '';
+  document.getElementById('modal-resp').classList.add('open');
+  setTimeout(() => document.getElementById('new-resp-name').focus(), 300);
+}
+
+function addResp() {
+  const name = document.getElementById('new-resp-name').value.trim();
+  if (!name) return;
+  if (!state.responsaveis.includes(name)) {
+    state.responsaveis.push(name);
+    saveState();
+  }
+  closeModal('modal-resp');
+  renderSettings();
+  toast(`Responsável "${name}" adicionado`);
+}
+
+function removeResp(name) {
+  if (state.responsaveis.length <= 1) { toast('Deve ter ao menos um responsável'); return; }
+  state.responsaveis = state.responsaveis.filter(r => r !== name);
+  saveState();
+  renderSettings();
+}
+
+function saveSettings() {
+  state.email = document.getElementById('settings-email').value.trim();
+  saveState();
+  toast('Configurações salvas ✓');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── EXPORT ─────────────────────────────────────────────────────────────────
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'm2gastos_backup.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearData() {
+  if (!confirm('Apagar TODOS os dados? Esta ação não pode ser desfeita.')) return;
+  state = { transactions: [], responsaveis: [...DEFAULT_RESP], email: '' };
+  saveState();
+  renderSettings();
+  toast('Dados apagados');
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function fmt(v) {
+  return parseFloat(v||0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+document.getElementById('tx-valor').addEventListener('input', updateSplitSection);
+document.getElementById('modal-resp').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('modal-resp');
+});
+
+// ── CATÁLOGO DE RECORRENTES ──────────────────────────────────────────────
+// Usado para auto-detectar tipo ao interpretar SMS
+const RECORRENTES_CATALOG = [
+  { nome: 'Apple',                  valor: 19.90,  cartao: 'bradesco', dia: 19 },
+  { nome: 'Doare',                  valor: 48.00,  cartao: 'bradesco', dia: 19 },
+  { nome: 'Estadão',                valor: 1.90,   cartao: 'bradesco', dia: 4  },
+  { nome: 'Wellhub',                valor: 199.99, cartao: 'bradesco', dia: 2  },
+  { nome: 'Spotify',                valor: 40.90,  cartao: 'bradesco', dia: 23 },
+  { nome: 'Instant Protection Plus',valor: 26.02,  cartao: 'bradesco', dia: 16 },
+  { nome: 'Dom Hélio Barber',       valor: 100.00, cartao: 'bradesco', dia: 15 },
+  { nome: 'Editora O Globo',        valor: 9.90,   cartao: 'bradesco', dia: 28 },
+  { nome: 'Seguro Residencial',     valor: 34.90,  cartao: 'inter',    dia: 24 },
+];
+
+// Seed com dados reais de março/2026 se vazio
+if (state.transactions.length === 0) {
+  state.transactions = [
+    // ── RECORRENTES BRADESCO ──
+    { id: 1,  nome: 'Apple',                   valor: 19.90,  date: '2026-03-19', cartao: 'bradesco', tipo: 'recorrente', responsaveis: { Marcello: 19.90 } },
+    { id: 2,  nome: 'Doare',                   valor: 48.00,  date: '2026-03-19', cartao: 'bradesco', tipo: 'recorrente', responsaveis: { Marcello: 48.00 } },
+    { id: 3,  nome: 'Estadão',                 valor: 1.90,   date: '2026-03-04', cartao: 'bradesco', tipo: 'recorrente', responsaveis: { Marcello: 1.90 } },
+    { id: 4,  nome: 'Wellhub',                 valor: 199.99, date: '2026-03-02', cartao: 'bradesco', tipo: 'recorrente', responsaveis: { Marcello: 199.99 } },
+    { id: 5,  nome: 'Spotify',                 valor: 40.90,  date: '2026-03-23', cartao: 'bradesco', tipo: 'recorrente', responsaveis: { Marcello: 40.90 } },
+    { id: 6,  nome: 'Instant Protection Plus', valor: 26.02,  date: '2026-03-16', cartao: 'bradesco', tipo: 'recorrente', responsaveis: { Marcello: 26.02 } },
+    { id: 7,  nome: 'Dom Hélio Barber',        valor: 100.00, date: '2026-03-15', cartao: 'bradesco', tipo: 'recorrente', responsaveis: { Marcello: 100.00 } },
+    { id: 8,  nome: 'Editora O Globo',         valor: 9.90,   date: '2026-02-28', cartao: 'bradesco', tipo: 'recorrente', responsaveis: { Marcello: 9.90 } },
+    // ── PARCELADOS BRADESCO ──
+    { id: 9,  nome: 'Odontoprimer',            valor: 462.33, date: '2026-01-16', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '3', parcTotal: '6',  responsaveis: { Marcello: 462.33 } },
+    { id: 10, nome: 'Hotmart (Décade Milionária)', valor: 399.00, date: '2026-10-27', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '5', parcTotal: '12', responsaveis: { Marcello: 399.00 } },
+    { id: 11, nome: 'Hotmart (Black RD)',       valor: 194.56, date: '2026-02-06', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '5', parcTotal: '12', responsaveis: { Marcello: 194.56 } },
+    { id: 12, nome: 'TAP',                      valor: 1130.17,date: '2026-09-19', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '7', parcTotal: '10', responsaveis: { M2: 1130.17 } },
+    { id: 13, nome: 'Gol Linhas Aéreas',        valor: 503.04, date: '2026-03-14', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '1', parcTotal: '3',  responsaveis: { Marcello: 503.04 } },
+    { id: 14, nome: 'Amazon',                   valor: 389.90, date: '2026-03-15', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '1', parcTotal: '3',  responsaveis: { Marcello: 389.90 } },
+    { id: 15, nome: 'HTM*PR (Curso)',           valor: 1498.62,date: '2026-03-07', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '1', parcTotal: '3',  responsaveis: { Marcello: 1498.62 } },
+    { id: 16, nome: 'Dux Nutrition',            valor: 271.12, date: '2026-02-24', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '1', parcTotal: '2',  responsaveis: { Marcello: 271.12 } },
+    { id: 17, nome: 'Kalunga',                  valor: 160.00, date: '2026-03-02', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '1', parcTotal: '2',  responsaveis: { Marcello: 160.00 } },
+    { id: 18, nome: '30NA',                     valor: 795.00, date: '2026-03-10', cartao: 'bradesco', tipo: 'parcelado', parcAtual: '1', parcTotal: '2',  responsaveis: { Marcello: 795.00 } },
+    // ── NORMAIS BRADESCO (março) ──
+    { id: 19, nome: 'iFood',                    valor: 88.89,  date: '2026-02-28', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 88.89 } },
+    { id: 20, nome: 'iFood',                    valor: 101.93, date: '2026-03-06', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 101.93 } },
+    { id: 21, nome: 'iFood',                    valor: 78.88,  date: '2026-03-07', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 78.88 } },
+    { id: 22, nome: 'iFood',                    valor: 41.91,  date: '2026-03-19', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 41.91 } },
+    { id: 23, nome: 'iFood',                    valor: 45.89,  date: '2026-03-21', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 45.89 } },
+    { id: 24, nome: 'Trigo Pane Pizza',          valor: 88.14,  date: '2026-02-27', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 88.14 } },
+    { id: 25, nome: 'Posto de Gasolina',         valor: 70.00,  date: '2026-03-01', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 70.00 } },
+    { id: 26, nome: 'Confeitaria Pan',           valor: 35.70,  date: '2026-03-01', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 35.70 } },
+    { id: 27, nome: 'Salumeria',                 valor: 199.36, date: '2026-03-02', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 199.36 } },
+    { id: 28, nome: 'Bate Coxa Boulevard',       valor: 65.97,  date: '2026-03-04', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 65.97 } },
+    { id: 29, nome: 'CMP Food Service',          valor: 86.20,  date: '2026-03-04', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 86.20 } },
+    { id: 30, nome: 'Joaquina Bar',              valor: 197.71, date: '2026-03-04', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 197.71 } },
+    { id: 31, nome: 'Estacionamento BH',         valor: 44.00,  date: '2026-03-04', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 44.00 } },
+    { id: 32, nome: 'Bell Art Boulevard',        valor: 16.99,  date: '2026-03-07', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 16.99 } },
+    { id: 33, nome: 'Goûter Brigaderia',         valor: 26.00,  date: '2026-03-10', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 26.00 } },
+    { id: 34, nome: 'Goûter Brigaderia',         valor: 34.00,  date: '2026-03-13', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 34.00 } },
+    { id: 35, nome: 'Mercado Livre',             valor: 179.00, date: '2026-03-14', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 179.00 } },
+    { id: 36, nome: 'Mercado Livre',             valor: 232.43, date: '2026-03-14', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 232.43 } },
+    { id: 37, nome: 'Barto Boulevard',           valor: 122.87, date: '2026-03-14', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 122.87 } },
+    { id: 38, nome: 'Restaurante Lar',           valor: 160.00, date: '2026-03-15', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 160.00 } },
+    { id: 39, nome: 'Cheirin Bão',               valor: 12.10,  date: '2026-03-15', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 12.10 } },
+    { id: 40, nome: 'Natta Café',                valor: 44.00,  date: '2026-03-18', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 44.00 } },
+    { id: 41, nome: 'Patroni Pizza',             valor: 41.85,  date: '2026-03-18', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 41.85 } },
+    { id: 42, nome: '99',                        valor: 18.00,  date: '2026-03-18', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 18.00 } },
+    { id: 43, nome: 'Droga Raia',                valor: 34.95,  date: '2026-03-19', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 34.95 } },
+    { id: 44, nome: '99',                        valor: 14.94,  date: '2026-03-20', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 14.94 } },
+    { id: 45, nome: 'Amazon Marketplace',        valor: 78.00,  date: '2026-03-22', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 78.00 } },
+    { id: 46, nome: 'Drogarias Pacheco',         valor: 12.99,  date: '2026-03-22', cartao: 'bradesco', tipo: 'normal', responsaveis: { Marcello: 12.99 } },
+    // ── INTER ──
+    { id: 47, nome: 'Seguro Residencial',        valor: 34.90,  date: '2026-03-24', cartao: 'inter',    tipo: 'recorrente', responsaveis: { Marcello: 34.90 } },
+    { id: 48, nome: 'Duo Gourmet',               valor: 59.00,  date: '2026-05-25', cartao: 'inter',    tipo: 'parcelado',  parcAtual: '11', parcTotal: '12', responsaveis: { Marcello: 29.50, Simone: 29.50 } },
+  ];
+  saveState();
+}
+
+renderHome();
+</script>
+</body>
+</html>
