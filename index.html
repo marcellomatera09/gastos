@@ -914,6 +914,12 @@ SMS: ${text}`;
       })
     });
     const data = await res.json();
+    if (!data.content) {
+      toast('Erro API: ' + JSON.stringify(data).slice(0,100));
+      document.getElementById('ai-spinner').style.display = 'none';
+      document.getElementById('ai-btn-text').textContent = '✦ Interpretar com IA';
+      return;
+    }
     const raw = data.content.map(i => i.text||'').join('').replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(raw);
 
