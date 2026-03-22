@@ -944,7 +944,8 @@ SMS: ${text}`;
     document.getElementById('sms-input').value = '';
     toast('✦ Dados preenchidos automaticamente');
   } catch(e) {
-    toast('Erro ao interpretar. Preencha manualmente.');
+    toast('Erro: ' + e.message);
+    console.error('Erro parser:', e);
   }
 
   document.getElementById('ai-spinner').style.display = 'none';
