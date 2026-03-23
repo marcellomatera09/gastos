@@ -410,6 +410,60 @@
     text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 20px;
   }
 </style>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyCTJuHo_snwehrvbeEiuPXw0ERt8xFyjIg',
+      authDomain: 'marcello-gastos.firebaseapp.com',
+      projectId: 'marcello-gastos',
+      storageBucket: 'marcello-gastos.firebasestorage.app',
+      messagingSenderId: '931404581393',
+      appId: '1:931404581393:web:0348c3fdf64b59035f7fb0'
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+    const DOC_REF = doc(db, 'usuarios', 'marcello');
+
+    // Salvar no Firebase
+    window.saveToFirebase = async function(state) {
+      try {
+        await setDoc(DOC_REF, {
+          transactions: state.transactions,
+          responsaveis: state.responsaveis,
+          email: state.email || '',
+          updatedAt: new Date().toISOString()
+        });
+      } catch(e) {
+        console.error('Firebase save error:', e);
+      }
+    };
+
+    // Carregar do Firebase
+    window.loadFromFirebase = async function() {
+      try {
+        const snap = await getDoc(DOC_REF);
+        if (snap.exists()) {
+          return snap.data();
+        }
+      } catch(e) {
+        console.error('Firebase load error:', e);
+      }
+      return null;
+    };
+
+    // Escutar mudanças em tempo real
+    window.listenFirebase = function(callback) {
+      onSnapshot(DOC_REF, (snap) => {
+        if (snap.exists()) callback(snap.data());
+      });
+    };
+
+    window.firebaseReady = true;
+    document.dispatchEvent(new Event('firebaseReady'));
+  </script>
 </head>
 <body>
 
@@ -571,6 +625,17 @@
     </div>
 
     <div class="card">
+      <div class="card-title" style="margin-bottom:4px">Chave de API</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Necessária para interpretar SMS com IA · Salva só no seu dispositivo</div>
+      <div class="form-group">
+        <label class="form-label">Anthropic API Key</label>
+        <input type="password" class="form-input" id="settings-apikey" placeholder="sk-ant-...">
+      </div>
+      <div id="apikey-status" style="font-size:12px;margin-bottom:12px"></div>
+      <button class="btn btn-primary" onclick="saveApiKey()">Salvar chave</button>
+    </div>
+
+    <div class="card">
       <div class="card-title" style="margin-bottom:14px">E-mail de fechamento</div>
       <div class="form-group">
         <label class="form-label">Seu e-mail</label>
@@ -628,15 +693,19 @@ function loadState() {
     return JSON.parse(localStorage.getItem('m2gastos') || 'null') || {
       transactions: [],
       responsaveis: [...DEFAULT_RESP],
-      email: ''
+      email: '',
+      apiKey: ''
     };
   } catch(e) {
-    return { transactions: [], responsaveis: [...DEFAULT_RESP], email: '' };
+    return { transactions: [], responsaveis: [...DEFAULT_RESP], email: '', apiKey: '' };
   }
 }
 
 function saveState() {
   localStorage.setItem('m2gastos', JSON.stringify(state));
+  if (window.saveToFirebase) {
+    window.saveToFirebase(state);
+  }
 }
 
 let state = loadState();
@@ -874,6 +943,10 @@ function selectChip(el, group) {
 async function parseSMS() {
   const text = document.getElementById('sms-input').value.trim();
   if (!text) return;
+  if (!state.apiKey) {
+    toast('Configure sua chave de API em Configurações');
+    return;
+  }
 
   document.getElementById('ai-spinner').style.display = 'flex';
   document.getElementById('ai-btn-text').textContent = 'Interpretando...';
@@ -906,7 +979,7 @@ SMS: ${text}`;
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': state.apiKey || '', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 300,
@@ -1077,6 +1150,12 @@ function deleteTransaction(id) {
 // ── SETTINGS ───────────────────────────────────────────────────────────────
 function renderSettings() {
   document.getElementById('settings-email').value = state.email || '';
+  const statusEl = document.getElementById('apikey-status');
+  if (statusEl) {
+    statusEl.innerHTML = state.apiKey
+      ? '<span style="color:var(--success)">✓ Chave configurada</span>'
+      : '<span style="color:var(--bradesco-color)">⚠ Chave não configurada — IA indisponível</span>';
+  }
   // Catálogo de recorrentes
   const recList = document.getElementById('recorrentes-settings-list');
   if (recList) {
@@ -1120,6 +1199,19 @@ function removeResp(name) {
   state.responsaveis = state.responsaveis.filter(r => r !== name);
   saveState();
   renderSettings();
+}
+
+function saveApiKey() {
+  const key = document.getElementById('settings-apikey').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    toast('Chave inválida — deve começar com sk-ant-');
+    return;
+  }
+  state.apiKey = key;
+  saveState();
+  document.getElementById('settings-apikey').value = '';
+  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--success)">✓ Chave salva com sucesso</span>';
+  toast('Chave de API salva ✓');
 }
 
 function saveSettings() {
@@ -1241,6 +1333,29 @@ if (state.transactions.length === 0) {
 }
 
 renderHome();
+
+// Firebase Sync
+async function initFromFirebase() {
+  try {
+    const remoteData = await window.loadFromFirebase();
+    if (remoteData && remoteData.transactions && remoteData.transactions.length > 0) {
+      state.transactions = remoteData.transactions;
+      state.responsaveis = remoteData.responsaveis || state.responsaveis;
+      state.email = remoteData.email || state.email;
+      localStorage.setItem('m2gastos', JSON.stringify(state));
+      renderHome();
+      toast('Sincronizado com a nuvem');
+    } else if (state.transactions.length > 0) {
+      window.saveToFirebase(state);
+    }
+  } catch(e) { console.error('Firebase init error:', e); }
+}
+
+if (window.firebaseReady) {
+  initFromFirebase();
+} else {
+  document.addEventListener('firebaseReady', initFromFirebase);
+}
 </script>
 </body>
 </html>
