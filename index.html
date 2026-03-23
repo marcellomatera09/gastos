@@ -504,8 +504,7 @@
         <textarea class="form-textarea" id="sms-input" placeholder="Cole aqui o SMS do Bradesco ou o texto do push do Inter..."></textarea>
       </div>
       <button class="btn btn-ai" onclick="parseSMS()">
-        <div id="ai-spinner" style="display:none" class="spinner"></div>
-        <span id="ai-btn-text">✦ Interpretar com IA</span>
+        ✦ Interpretar SMS
       </button>
     </div>
 
@@ -565,8 +564,9 @@
       <div id="split-inputs"></div>
     </div>
 
-    <div style="margin-top:6px">
-      <button class="btn btn-primary" onclick="addTransaction()">Salvar despesa</button>
+    <div style="margin-top:6px;display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="cancelForm()" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary" onclick="addTransaction()" style="flex:2">Salvar despesa</button>
     </div>
   </div>
 
@@ -940,95 +940,126 @@ function selectChip(el, group) {
 }
 
 // ── SMS PARSER ─────────────────────────────────────────────────────────────
-async function parseSMS() {
+// Dicionário de nomes conhecidos do Bradesco
+const NOME_MAP = {
+  'IFD': 'iFood', 'IFOOD': 'iFood', 'BONNE': 'iFood', 'BROTO': 'iFood',
+  'GENER': 'iFood', 'EXTO': 'iFood',
+  'WELLHUB': 'Wellhub', 'APPLECOMBILL': 'Apple', 'SPOTFY': 'Spotify',
+  'ESTADAO': 'Estadão', 'EDITORA O GLOBO': 'Editora O Globo',
+  'TRINKS': 'Dom Hélio Barber', 'DOM HELIO': 'Dom Hélio Barber',
+  'KALUNGA': 'Kalunga', 'MERCADOLIVRE': 'Mercado Livre', 'MERCADO LIVRE': 'Mercado Livre',
+  'AMAZON': 'Amazon', 'AMAZONMKTPLC': 'Amazon Marketplace',
+  'GOL LINHAS': 'Gol Linhas Aéreas', 'TAP': 'TAP',
+  'RAIA': 'Droga Raia', 'DROGARIAS PACHE': 'Drogarias Pacheco',
+  'UBER': 'Uber', '99APP': '99', '99POP': '99',
+  'HOTMART': 'Hotmart', 'ODONTOPRIMER': 'Odontoprimer',
+  'INSTANT PROTECTION': 'Instant Protection Plus',
+  'DOARE': 'Doare', 'SEGURO RESIDENCIAL': 'Seguro Residencial',
+  'SPEEDPA': 'Estacionamento', 'VMT': 'Fast Pass Aeroporto',
+  'FAST PASS': 'Fast Pass Aeroporto', 'CONGONHAS': 'Fast Pass Aeroporto',
+  'CGHFAST': 'Fast Pass Aeroporto', 'SDUBCL': 'Fast Pass Aeroporto',
+  'PATRONI': 'Patroni Pizza', 'CHEIRIN': 'Cheirin Bão',
+  'GOUTER': 'Goûter Brigaderia', 'BRIGADERIA': 'Goûter Brigaderia',
+  'NATTA': 'Natta Café', 'SALUMERIA': 'Salumeria',
+  'BARTO': 'Barto Boulevard', 'JOAQUINA': 'Joaquina Bar',
+  'BATE COXA': 'Bate Coxa Boulevard', 'CMP FOOD': 'CMP Food Service',
+  'BELL ART': 'Bell Art Boulevard', 'TRIGO PANE': 'Trigo Pane Pizza',
+  'CONFEITARIA PAN': 'Confeitaria Pan', 'POSTO': 'Posto de Gasolina',
+  'RESTAURANTE LAR': 'Restaurante Lar', 'DUX': 'Dux Nutrition',
+  'HTM': 'HTM (Curso)', 'PAYT': 'PayT Tecnologia',
+};
+
+function limparNome(raw) {
+  // Remove códigos numéricos iniciais, ~, caracteres especiais
+  let nome = raw.replace(/^\d+/,'').replace(/[~*]/g,' ').replace(/\s+/g,' ').trim();
+  // Tentar mapear pelo dicionário
+  const upper = nome.toUpperCase();
+  for (const [key, val] of Object.entries(NOME_MAP)) {
+    if (upper.includes(key)) return val;
+  }
+  // Capitalizar primeira letra de cada palavra
+  return nome.toLowerCase().replace(/\w/g, c => c.toUpperCase());
+}
+
+function parseSMS() {
   const text = document.getElementById('sms-input').value.trim();
   if (!text) return;
-  if (!state.apiKey) {
-    toast('Configure sua chave de API em Configurações');
+
+  // Detectar cancelamento
+  if (text.includes('CANCELADA') || text.includes('CANCELADO')) {
+    toast('Compra cancelada — ignorando');
+    document.getElementById('sms-input').value = '';
     return;
   }
 
-  document.getElementById('ai-spinner').style.display = 'flex';
-  document.getElementById('ai-btn-text').textContent = 'Interpretando...';
-
-  const recCatalog = RECORRENTES_CATALOG.map(r => r.nome).join(', ');
-  const prompt = `Você é um extrator de dados de cartão de crédito. Analise este SMS/push e retorne JSON.
-
-Recorrentes conhecidos (classificar sempre como recorrente): ${recCatalog}
-
-Retorne APENAS JSON válido sem markdown:
-{
-  "nome": "nome limpo",
-  "valor": número float,
-  "date": "YYYY-MM-DD",
-  "cartao": "bradesco" ou "inter",
-  "tipo": "normal" ou "parcelado" ou "recorrente",
-  "parcAtual": número ou null,
-  "parcTotal": número ou null
-}
-
-Regras:
-- EM X X no SMS = parcelado. Ex: EM 2 X parcAtual:1 parcTotal:2
-- Nomes com ~ * números = limpar. 55IFD*BONNE=iFood, 39Wellhub=Wellhub, 34IFD=iFood
-- BRADESCO = bradesco, Inter = inter
-- PG*TRINKS = Dom Hélio Barber (recorrente)
-- VMT*, FAST PASS, CONGONHAS R$0,10 = normal (taxa embarque)
-
-SMS: ${text}`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': state.apiKey || '', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    if (!data.content) {
-      toast('Erro API: ' + JSON.stringify(data).slice(0,100));
-      document.getElementById('ai-spinner').style.display = 'none';
-      document.getElementById('ai-btn-text').textContent = '✦ Interpretar com IA';
-      return;
-    }
-    const raw = data.content.map(i => i.text||'').join('').replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(raw);
-
-    if (parsed.date) document.getElementById('tx-date').value = parsed.date;
-    if (parsed.valor) document.getElementById('tx-valor').value = parsed.valor;
-    if (parsed.nome) document.getElementById('tx-nome').value = parsed.nome;
-
-    if (parsed.cartao) {
-      document.querySelectorAll('#cartao-chips .chip').forEach(c => {
-        c.classList.toggle('selected', c.dataset.val === parsed.cartao);
-      });
-    }
-    if (parsed.tipo) {
-      document.querySelectorAll('#tipo-chips .chip').forEach(c => {
-        c.classList.toggle('selected', c.dataset.val === parsed.tipo);
-      });
-      document.getElementById('parcelamento-fields').style.display =
-        parsed.tipo === 'parcelado' ? 'block' : 'none';
-    }
-    if (parsed.parcAtual) document.getElementById('tx-parc-atual').value = parsed.parcAtual;
-    if (parsed.parcTotal) document.getElementById('tx-parc-total').value = parsed.parcTotal;
-
-    // Auto-select Marcello as default
-    document.querySelectorAll('#resp-chips .chip').forEach(c => {
-      c.classList.toggle('selected', c.dataset.val === 'Marcello');
-    });
-
-    document.getElementById('sms-input').value = '';
-    toast('✦ Dados preenchidos automaticamente');
-  } catch(e) {
-    toast('Erro: ' + e.message);
-    console.error('Erro parser:', e);
+  // Extrair data DD/MM/AAAA
+  const dateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  let dateStr = '';
+  if (dateMatch) {
+    dateStr = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
   }
 
-  document.getElementById('ai-spinner').style.display = 'none';
-  document.getElementById('ai-btn-text').textContent = '✦ Interpretar com IA';
+  // Extrair valor R$ XX,XX ou R$ X.XXX,XX
+  const valorMatch = text.match(/R\$\s?([\d.]+,[\d]{2})/);
+  let valor = '';
+  if (valorMatch) {
+    valor = parseFloat(valorMatch[1].replace('.','').replace(',','.'));
+  }
+
+  // Detectar parcelamento: EM X X
+  const parcMatch = text.match(/EM\s+(\d+)\s+X/i);
+  let tipo = 'normal', parcAtual = '', parcTotal = '';
+  if (parcMatch) {
+    tipo = 'parcelado';
+    parcTotal = parseInt(parcMatch[1]);
+    parcAtual = 1;
+  }
+
+  // Extrair nome do estabelecimento
+  // Padrão: após o valor, antes da cidade
+  let nome = '';
+  const aposValor = text.match(/R\$[\s\d.,]+(.+?)(?:\s{2,}|\s+[A-Z]{2,}\s*[A-Z]*\.?\s*$)/);
+  if (aposValor) {
+    nome = limparNome(aposValor[1].trim());
+  } else {
+    // Fallback: pegar última parte significativa
+    const partes = text.split(/\s{2,}/);
+    if (partes.length > 1) nome = limparNome(partes[partes.length - 2] || '');
+  }
+
+  // Verificar recorrentes
+  const recorrente = RECORRENTES_CATALOG.find(r =>
+    nome.toLowerCase().includes(r.nome.toLowerCase()) ||
+    text.toUpperCase().includes(r.nome.toUpperCase())
+  );
+  if (recorrente) tipo = 'recorrente';
+
+  // Detectar cartão pelo número final
+  const cartaoMatch = text.match(/FINAL\s+(\d{4})/);
+  const cartao = 'bradesco'; // SMS do Bradesco sempre
+
+  // Preencher formulário
+  if (dateStr) document.getElementById('tx-date').value = dateStr;
+  if (valor)   document.getElementById('tx-valor').value = valor;
+  if (nome)    document.getElementById('tx-nome').value = nome;
+
+  document.querySelectorAll('#cartao-chips .chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.val === cartao);
+  });
+  document.querySelectorAll('#tipo-chips .chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.val === tipo);
+  });
+  document.getElementById('parcelamento-fields').style.display =
+    tipo === 'parcelado' ? 'block' : 'none';
+  if (parcAtual) document.getElementById('tx-parc-atual').value = parcAtual;
+  if (parcTotal) document.getElementById('tx-parc-total').value = parcTotal;
+
+  document.querySelectorAll('#resp-chips .chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.val === 'Marcello');
+  });
+
+  document.getElementById('sms-input').value = '';
+  toast('✦ SMS interpretado — confira os dados');
 }
 
 // ── ADD TRANSACTION ────────────────────────────────────────────────────────
@@ -1067,16 +1098,28 @@ function addTransaction() {
   state.transactions.unshift(tx);
   saveState();
   toast('Despesa salva! ✓');
+  resetForm();
+  showPage('home');
+}
 
-  // Reset
+function cancelForm() {
+  resetForm();
+  showPage('home');
+}
+
+function resetForm() {
+  document.getElementById('sms-input').value = '';
   document.getElementById('tx-nome').value = '';
   document.getElementById('tx-valor').value = '';
   document.getElementById('tx-parc-atual').value = '';
   document.getElementById('tx-parc-total').value = '';
   document.getElementById('parcelamento-fields').style.display = 'none';
-  document.querySelectorAll('#tipo-chips .chip').forEach((c,i) => c.classList.toggle('selected', i===0));
-  document.querySelectorAll('#resp-chips .chip').forEach(c => c.classList.remove('selected'));
   document.getElementById('split-section').style.display = 'none';
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('tx-date').value = today;
+  document.querySelectorAll('#tipo-chips .chip').forEach((c,i) => c.classList.toggle('selected', i===0));
+  document.querySelectorAll('#cartao-chips .chip').forEach((c,i) => c.classList.toggle('selected', i===0));
+  document.querySelectorAll('#resp-chips .chip').forEach(c => c.classList.remove('selected'));
 }
 
 // ── HISTORY ────────────────────────────────────────────────────────────────
